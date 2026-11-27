@@ -1,0 +1,15 @@
+:root {
+  --scale: 0.94;
+}
+
+@media (max-width: 430px) {
+  :root {
+    --scale: 0.78;
+  }
+}
+
+@media (max-width: 330px) {
+  :root {
+    --scale: 0.68;
+  }
+}

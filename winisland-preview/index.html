@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; form-action 'none'; base-uri 'none'" />
+    <title>WinIsland preview</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="preview.css" />
+  </head>
+  <body>
+    <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- liquid: blur then hard-threshold the alpha so touching shapes fuse -->
+        <filter id="goo" x="-5%" y="-30%" width="110%" height="160%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b" />
+          <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11" />
+        </filter>
+        <!-- directional motion blur, driven from app.js -->
+        <filter id="mbH" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+          <feGaussianBlur stdDeviation="0 0" />
+        </filter>
+        <filter id="mbV" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+          <feGaussianBlur stdDeviation="0 0" />
+        </filter>
+      </defs>
+      <symbol id="i-hourglass" viewBox="0 0 24 24">
+        <path d="M6.8 2.8h10.4M6.8 21.2h10.4" />
+        <path d="M8 2.8c0 3.6 1.8 5.6 4 7.4 2.2-1.8 4-3.8 4-7.4" />
+        <path d="M8 21.2c0-3.6 1.8-5.6 4-7.4 2.2 1.8 4 3.8 4 7.4" />
+      </symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24">
+        <path d="M13.4 2 5.2 13.1h5.6L9.9 22 19 10.6h-5.9L13.4 2Z" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-repeat" viewBox="0 0 24 24">
+        <path d="M17 3.2 20 6.2l-3 3" />
+        <path d="M20 6.2H8.2A4.2 4.2 0 0 0 4 10.4" />
+        <path d="M7 20.8 4 17.8l3-3" />
+        <path d="M4 17.8h11.8a4.2 4.2 0 0 0 4.2-4.2" />
+      </symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24">
+        <path d="M18.4 5.4v13.2L9.2 12l9.2-6.6Z" fill="currentColor" stroke="none" />
+        <rect x="4.6" y="5" width="2.4" height="14" rx="1.2" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-next" viewBox="0 0 24 24">
+        <path d="M5.6 5.4v13.2L14.8 12 5.6 5.4Z" fill="currentColor" stroke="none" />
+        <rect x="17" y="5" width="2.4" height="14" rx="1.2" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="M8.4 5.4v13.2L18.4 12 8.4 5.4Z" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24">
+        <rect x="7" y="4.8" width="3.4" height="14.4" rx="1.4" fill="currentColor" stroke="none" />
+        <rect x="13.6" y="4.8" width="3.4" height="14.4" rx="1.4" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path d="M12 20.2c-1.1-.7-7.4-4.7-7.4-9.7A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.4 3.2c0 5-6.3 9-7.4 9.7Z" />
+      </symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24">
+        <path d="M4 9.3h3.1L11.5 5.5v13L7.1 14.7H4z" />
+        <path d="M14.9 9.4a3.7 3.7 0 0 1 0 5.2" />
+        <path d="M17.5 7a7.3 7.3 0 0 1 0 10" />
+      </symbol>
+      <symbol id="i-link" viewBox="0 0 24 24">
+        <path d="M10.4 13.6a3.7 3.7 0 0 0 5.2 0l2.9-2.9a3.7 3.7 0 1 0-5.2-5.2l-1.4 1.4" />
+        <path d="M13.6 10.4a3.7 3.7 0 0 0-5.2 0l-2.9 2.9a3.7 3.7 0 1 0 5.2 5.2l1.4-1.4" />
+      </symbol>
+      <symbol id="i-pip" viewBox="0 0 24 24">
+        <rect x="2.8" y="4.6" width="18.4" height="14.8" rx="2.6" />
+        <rect x="11.8" y="11.2" width="7.2" height="6" rx="1.6" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-left" viewBox="0 0 24 24">
+        <path d="M14.6 5.4 8 12l6.6 6.6" />
+      </symbol>
+      <symbol id="i-right" viewBox="0 0 24 24">
+        <path d="M9.4 5.4 16 12l-6.6 6.6" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 4v9.5" />
+        <path d="m8.2 10.6 3.8 3.8 3.8-3.8" />
+        <path d="M5 17.5h14" />
+      </symbol>
+      <symbol id="i-note" viewBox="0 0 24 24">
+        <path d="M9.4 17.4V6.6l8.2-1.8v10" />
+        <circle cx="7" cy="17.6" r="2.6" />
+        <circle cx="15.2" cy="15.6" r="2.6" />
+      </symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24">
+        <path d="M18 9.8a6 6 0 0 0-12 0c0 7-2.2 7-2.2 8.6h16.4C20.2 16.8 18 16.8 18 9.8Z" />
+        <path d="M9.4 21h5.2" />
+      </symbol>
+      <symbol id="i-bluetooth" viewBox="0 0 24 24"><path d="M7 7 17 17 12 22V2l5 5L7 17" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.4" />
+        <path d="M12 7.4V12l3.2 2" />
+      </symbol>
+      <symbol id="i-identify" viewBox="0 0 24 24">
+        <path d="M8.2 17.4a2.4 2.4 0 1 1-2.4-2.4c.37 0 .72.09 1.03.24V6.5l8.1-1.7v8.3" />
+        <path d="M14.9 17.4a2.4 2.4 0 1 1-1.6-2.26" />
+        <path d="M18.6 6.9a6.2 6.2 0 0 1 0 8.4" />
+        <path d="M21.1 9.7a3.1 3.1 0 0 1 0 4.1" />
+      </symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24">
+        <rect x="5" y="4.6" width="14" height="16.8" rx="3" />
+        <path d="M9.2 4.4V3.6a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6v.8" />
+        <path d="M8.8 10.4h6.4M8.8 14.2h4.6" />
+      </symbol>
+      <symbol id="i-list" viewBox="0 0 24 24">
+        <path d="M9.4 6.8h10.2M9.4 12h10.2M9.4 17.2h10.2" />
+        <path d="M4.8 6.8h.02M4.8 12h.02M4.8 17.2h.02" stroke-width="2.6" />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="m6.4 6.4 11.2 11.2M17.6 6.4 6.4 17.6" />
+      </symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24">
+        <path d="M15.4 4.4l4.2 4.2L9.4 18.8l-5 1.1 1.1-5z" />
+        <path d="m13.2 6.6 4.2 4.2" />
+      </symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3.2" />
+        <path d="M19.2 14.6a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.56-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.56 1.03z" />
+      </symbol>
+
+      <symbol id="i-roblox" viewBox="0 0 24 24">
+        <path d="M6.1 3.1 21 6.1l-3 14.8-14.9-3L6.1 3.1Z" />
+        <path d="m10.1 10.2 3.6.7-.7 3.6-3.6-.7.7-3.6Z" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="5.4" y="10.2" width="13.2" height="9.6" rx="2.8" />
+        <path d="M8.6 10.2V7.9a3.4 3.4 0 0 1 6.8 0v2.3" />
+        <path d="M12 14v2.4" />
+      </symbol>
+      <symbol id="i-crop" viewBox="0 0 24 24">
+        <path d="M7.4 3.4v13.2h13.2" />
+        <path d="M3.4 7.4h13.2v13.2" />
+      </symbol>
+      <symbol id="i-mute" viewBox="0 0 24 24">
+        <path d="M4 9.3h3.1L11.5 5.5v13L7.1 14.7H4z" />
+        <path d="m15.4 9.8 4.6 4.4M20 9.8l-4.6 4.4" />
+      </symbol>
+      <symbol id="i-shuffle" viewBox="0 0 24 24">
+        <path d="M17.4 4.2 20.2 7l-2.8 2.8" />
+        <path d="M3.8 7h4.6l7.2 10h4.6" />
+        <path d="M17.4 14.2 20.2 17l-2.8 2.8" />
+        <path d="M3.8 17h4.6" />
+      </symbol>
+      <symbol id="i-discord" viewBox="0 0 24 24">
+        <path d="M8.7 5.9c2.1-.5 4.5-.5 6.6 0 2.1 2.4 3.3 5.6 3.6 9.1-1.3 1.2-2.9 2-4.6 2.4l-.7-1.2c1-.3 1.9-.8 2.7-1.4-2.8 1.2-6 1.2-8.8 0 .8.6 1.7 1.1 2.7 1.4l-.7 1.2c-1.7-.4-3.3-1.2-4.6-2.4.3-3.5 1.5-6.7 3.6-9.1Z" />
+        <circle cx="9.5" cy="12.7" r="1.1" />
+        <circle cx="14.5" cy="12.7" r="1.1" />
+      </symbol>
+      <symbol id="i-headset" viewBox="0 0 24 24">
+        <path d="M5.6 14.2V12a6.4 6.4 0 0 1 12.8 0v2.2" />
+        <rect x="3.7" y="13.2" width="3.7" height="6" rx="1.7" />
+        <rect x="16.6" y="13.2" width="3.7" height="6" rx="1.7" />
+        <path d="M18.4 19.2a3.1 3.1 0 0 1-3.1 2.3h-1.9" />
+      </symbol>
+    </svg>
+
+    <div id="stage">
+      <div id="island" data-open="false" data-activity="clock" data-page="clock" data-timer="idle" data-tmode="off">
+        <div class="goo" aria-hidden="true"><i class="goo-pill"></i><i class="goo-t"></i><i class="goo-d"></i></div>
+        <div class="pill" id="pill">
+          <div class="pv" data-view="media">
+            <div class="pv-clock" id="pillMediaClock">8:16</div>
+            <div class="wave" id="pillWave"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="pv" data-view="timer">
+            <span class="pv-timer-ic"><svg class="ic" aria-hidden="true"><use href="#i-hourglass" /></svg></span>
+            <span class="pv-timer-mid"><svg class="ic" aria-hidden="true"><use href="#i-pause" /></svg></span>
+            <div class="pv-time" id="pillTimerTime">06:42</div>
+          </div>
+
+          <div class="pv" data-view="charging">
+            <div class="pv-watts" id="pillSource">AC</div>
+            <div class="pv-charge">
+              <span id="pillPercent">22.45%</span>
+              <span class="bolt-badge"><svg class="ic" aria-hidden="true"><use href="#i-bolt" /></svg></span>
+            </div>
+          </div>
+
+          <div class="pv" data-view="clock">
+            <div class="pv-clock" id="pillClock">8:16</div>
+            <div class="pv-date" id="pillDate">Sat 14</div>
+          </div>
+
+          <div class="dl-face" id="dlFace">
+            <span class="dl-icon"><svg class="ic"><use href="#i-download" /></svg></span>
+            <span class="dl-body">
+              <span class="dl-name" id="dlName">Downloading</span>
+              <span class="dl-bar"><u id="dlBar"></u></span>
+            </span>
+            <span class="dl-count" id="dlCount">1</span>
+          </div>
+        </div>
+
+        <div class="island-alert" id="islandAlert" role="status" aria-live="polite" hidden>
+          <div class="alert-icon" id="alertIcon"><svg class="ic" aria-hidden="true"><use href="#i-bell" /></svg><img id="alertImage" alt="" hidden /></div>
+          <div class="alert-copy">
+            <div class="alert-source" id="alertSource">WinIsland</div>
+            <div class="alert-title" id="alertTitle"></div>
+            <div class="alert-body" id="alertBody"></div>
+            <button class="alert-action" id="alertAction" type="button" hidden>Allow access</button>
+          </div>
+          <button class="alert-dismiss" id="alertDismiss" type="button" aria-label="Dismiss alert"><svg class="ic"><use href="#i-x" /></svg></button>
+        </div>
+
+        <button class="dl-bubble" id="dlBubble" type="button" title="Download">
+          <svg class="dl-ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="ring-track" cx="22" cy="22" r="19" />
+            <circle class="ring-fill" id="dlRing" cx="22" cy="22" r="19" />
+          </svg>
+          <span class="dl-bubble-ic"><svg class="ic" aria-hidden="true"><use href="#i-download" /></svg></span>
+          <span class="dl-bubble-count" id="dlBubbleCount">1</span>
+        </button>
+
+        <button class="t-bubble" id="tBubble" type="button" aria-label="Timer">
+          <svg class="t-bubble-ring" viewBox="0 0 46 46" aria-hidden="true">
+            <circle class="ring-track" cx="23" cy="23" r="20" />
+            <circle class="ring-fill" id="tBubbleArc" cx="23" cy="23" r="20" />
+          </svg>
+          <svg class="ic t-bubble-ic" aria-hidden="true"><use href="#i-hourglass" /></svg>
+        </button>
+
+        <div class="card" id="card">
+          <div class="card-clip">
+          <div class="scene" id="scene" aria-hidden="true">
+            <div class="scene-sky"></div>
+            <div class="scene-stars" id="sceneStars"></div>
+            <div class="scene-orb" data-orb="sun"><span class="scene-rays"></span><span class="scene-disc"></span></div>
+            <div class="scene-ridge r3"></div>
+            <div class="scene-ridge r2"></div>
+            <div class="scene-ridge r1"></div>
+            <div class="scene-tint"></div>
+          </div>
+          <section class="page page-media" data-page="media">
+            <div class="media-bg" id="mediaBg"></div>
+            <div class="page-inner">
+              <div class="m-top">
+                <div class="m-art" id="mArt"></div>
+                <div class="m-meta">
+                  <div class="m-title" id="mTitle">Far closer</div>
+                  <div class="m-artist" id="mArtist">David</div>
+                </div>
+                <button class="m-top-btn" id="mShare" aria-label="Copy link"><svg class="ic"><use href="#i-link" /></svg></button>
+              </div>
+
+              <div class="m-lyric" id="mLyric" role="button" tabindex="0" title="Show lyrics"></div>
+
+              <div class="m-controls">
+                <button class="ctrl mini" id="mShuffle" data-cmd="shuffle" aria-label="Shuffle"><svg class="ic"><use href="#i-shuffle" /></svg></button>
+                <button class="ctrl" id="mPip" data-cmd="pip" aria-label="Picture in picture"><svg class="ic"><use href="#i-pip" /></svg></button>
+                <button class="ctrl" data-cmd="prev" aria-label="Previous"><svg class="ic"><use href="#i-prev" /></svg></button>
+                <button class="ctrl big" id="mPlay" data-cmd="playpause" aria-label="Play or pause">
+                  <svg class="ic i-play"><use href="#i-play" /></svg>
+                  <svg class="ic i-pause"><use href="#i-pause" /></svg>
+                </button>
+                <button class="ctrl" data-cmd="next" aria-label="Next"><svg class="ic"><use href="#i-next" /></svg></button>
+                <button class="ctrl" id="mVolume" aria-label="Volume"><svg class="ic"><use href="#i-volume" /></svg></button>
+                <button class="ctrl mini" id="mRepeat" data-cmd="repeat" aria-label="Repeat"><svg class="ic"><use href="#i-repeat" /></svg></button>
+              </div>
+
+              <div class="m-bottom">
+                <div class="m-progress">
+                  <span class="time" id="mElapsed">0:19</span>
+                  <div class="track" id="mTrack"><div class="fill" id="mFill"></div><div class="knob" id="mKnob"></div></div>
+                  <span class="time end" id="mTotal">2:31</span>
+                </div>
+
+                <div class="m-vol">
+                  <svg class="ic vol-ic"><use href="#i-volume" /></svg>
+                  <div class="track" id="vTrack"><div class="fill" id="vFill"></div><div class="knob" id="vKnob"></div></div>
+                  <span class="time" id="vPct">100%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-lyrics" id="mLyrics">
+              <div class="lyr-head">
+                <span class="lyr-title">Lyrics</span>
+                <button class="lyr-close" id="lyrClose" type="button">Close</button>
+              </div>
+              <div class="lyr-body" id="lyrBody"></div>
+            </div>
+          </section>
+
+          <section class="page page-timer" data-page="timer">
+            <div class="page-inner">
+              <div class="t-row">
+                <svg class="ic hg big" aria-hidden="true"><use href="#i-hourglass" /></svg>
+                <div class="t-mid">
+                  <div class="t-time" id="tTime">06:41</div>
+                  <div class="t-label">
+                    <span id="tLabel">Timer</span>
+                    <button class="t-unit" id="tUnit" aria-label="Change the step size">min</button>
+                    <button class="t-pomo" id="tPomodoro" type="button" aria-label="Pomodoro cycle" title="25 min focus, then 5 min break">25·5</button>
+                  </div>
+                </div>
+                <button class="ring-btn" id="tToggle" aria-label="Start or pause timer">
+                  <svg class="ring" viewBox="0 0 64 64" aria-hidden="true">
+                    <circle class="ring-track" cx="32" cy="32" r="27" />
+                    <circle class="ring-arc" id="tArc" cx="32" cy="32" r="27" />
+                  </svg>
+                  <span class="ring-icon">
+                    <svg class="ic i-play"><use href="#i-play" /></svg>
+                    <svg class="ic i-pause"><use href="#i-pause" /></svg>
+                  </span>
+                </button>
+                <button class="x-btn" id="tCancel" aria-label="Cancel timer"><svg class="ic"><use href="#i-x" /></svg></button>
+              </div>
+              <div class="t-presets" id="tPresets">
+                <button data-min="1">1 min</button>
+                <button data-min="5">Five min</button>
+                <button data-min="10">10 min</button>
+                <button data-min="15">15 min</button>
+                <button data-min="25">25 min</button>
+                <button data-min="60">60 min</button>
+              </div>
+            </div>
+          </section>
+          <section class="page page-system" data-page="system">
+            <div class="page-inner">
+              <div class="sys-head">
+                <span class="sys-title">System</span>
+                <span class="sys-host" id="sysHost">this PC</span>
+              </div>
+              <div class="sys-row sys-cpu"><span>CPU</span><b id="sysCpu">0%</b><i><u id="sysCpuBar"></u></i></div>
+              <div class="sys-row sys-gpu"><span>GPU</span><b id="sysGpu">0%</b><i><u id="sysGpuBar"></u></i></div>
+              <div class="sys-row sys-ram"><span>RAM</span><b id="sysRam">0%</b><i><u id="sysRamBar"></u></i></div>
+              <div class="sys-row sys-disk"><span>DISK</span><b id="sysDisk">0%</b><i><u id="sysDiskBar"></u></i></div>
+              <div class="sys-graph">
+                <svg class="sys-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="sparkCpuFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="rgba(125, 180, 255, 0.34)" />
+                      <stop offset="100%" stop-color="rgba(125, 180, 255, 0)" />
+                    </linearGradient>
+                  </defs>
+                  <path class="spark-grid" d="M0 1H100M0 16H100M0 31H100" />
+                  <polygon class="spark-area cpu" id="sysCpuFill" points="0,32 100,32" />
+                  <polyline class="spark-line cpu" id="sysCpuLine" points="0,32 100,32" />
+                  <polyline class="spark-line ram" id="sysRamLine" points="0,32 100,32" />
+                </svg>
+                <div class="spark-legend">
+                  <span class="spark-key cpu">CPU</span>
+                  <span class="spark-key ram">RAM</span>
+                </div>
+              </div>
+              <div class="sys-foot">
+                <span id="sysUptime">Up —</span>
+                <span id="sysBatt">Battery —</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="page page-clock" data-page="clock">
+            <div class="celestial-toggle" id="celestialToggle" aria-hidden="true">
+            <svg class="moon moon-clock" viewBox="0 0 11 11" aria-hidden="true" shape-rendering="crispEdges">
+              <path class="moon-body" d="M3 0h1v1h-1zM4 0h1v1h-1zM5 0h1v1h-1zM6 0h1v1h-1zM7 0h1v1h-1zM1 1h1v1h-1zM2 1h1v1h-1zM3 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM8 1h1v1h-1zM9 1h1v1h-1zM1 2h1v1h-1zM2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM9 2h1v1h-1zM0 3h1v1h-1zM1 3h1v1h-1zM2 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM6 3h1v1h-1zM7 3h1v1h-1zM8 3h1v1h-1zM9 3h1v1h-1zM10 3h1v1h-1zM0 4h1v1h-1zM1 4h1v1h-1zM2 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM0 6h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM0 7h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM1 8h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM9 8h1v1h-1zM1 9h1v1h-1zM2 9h1v1h-1zM3 9h1v1h-1zM4 9h1v1h-1zM5 9h1v1h-1zM6 9h1v1h-1zM7 9h1v1h-1zM8 9h1v1h-1zM9 9h1v1h-1zM3 10h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1z" />
+              <path class="moon-craters" d="M3 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM2 6h1v1h-1zM3 6h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1z" />
+            </svg>
+            <svg class="sun sun-clock" viewBox="0 0 40 40" aria-hidden="true"><path class="sun-rays" d="M18 1h4v6h-4zM18 33h4v6h-4zM1 18h6v4H1zM33 18h6v4h-6zM6 8l3-3 5 5-3 3zM26 28l3-3 5 5-3 3zM29 5l3 3-5 5-3-3zM11 25l3 3-5 5-3-3z"/><circle class="sun-body" cx="20" cy="20" r="9"/></svg>
+            </div>
+            <div class="page-inner">
+              <div class="clk-time" id="clkTime">06:41</div>
+              <div class="clk-sub">
+                <div class="clk-date" id="clkDate">Saturday, 14 November</div>
+                <div class="clk-weather" id="clkWeather"></div>
+              </div>
+              <div class="clk-world" id="clkWorld"></div>
+              <div class="clk-dl" id="clkDl" hidden>
+                <span class="dl-icon"><svg class="ic"><use href="#i-download" /></svg></span>
+                <span class="clk-dl-body">
+                  <span class="clk-dl-meta" id="clkDlMeta">0 MB</span>
+                  <span class="dl-bar"><u id="clkDlBar"></u></span>
+                </span>
+              </div>
+              <div class="cb-panel">
+                <div class="cb-head">
+                  <span class="cb-title">Clipboard</span>
+                  <button class="link" id="clkTimer">Timer</button>
+                </div>
+                <div class="cb-list" id="cbList"></div>
+              </div>
+            </div>
+          </section>
+          <section class="page page-identify" data-page="identify">
+            <div class="page-inner">
+              <div class="id-head">
+                <span class="id-label">Identify song</span>
+                <span class="id-hint">Tap to listen</span>
+              </div>
+              <div class="id-body">
+                <div class="id-art" id="idArt"><svg class="ic" aria-hidden="true"><use href="#i-identify" /></svg></div>
+                <div class="id-info">
+                  <div class="id-title" id="idTitle">Nothing playing</div>
+                  <div class="id-sub" id="idSub">Play something first</div>
+                </div>
+              </div>
+              <div class="id-actions">
+                <button class="id-btn" id="idBtn" type="button">
+                  <span class="id-dot" id="idDot"></span>
+                  <span id="idBtnText">Listen</span>
+                </button>
+                <button class="id-btn sub" id="idCopy" type="button" hidden>Copy</button>
+                <button class="id-btn sub" id="idYt" type="button" hidden>YouTube</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="page page-clipboard" data-page="clipboard">
+            <div class="page-inner">
+              <div class="cb-head">
+                <span class="cb-title">Clipboard history</span>
+                <span class="cb-hint">Tap to copy</span>
+              </div>
+              <div class="cb-list full" id="cbPageList"></div>
+            </div>
+          </section>
+          <section class="page page-notes" data-page="notes">
+            <div class="page-inner">
+              <div class="notes-head">
+                <span class="notes-title">Notes</span>
+                <span class="notes-status" id="notesStatus">Loading…</span>
+              </div>
+              <textarea class="notes-editor" id="notesEditor" maxlength="30000" placeholder="Write a note…" aria-label="Your notes" disabled></textarea>
+            </div>
+          </section>
+          <section class="page page-tasks" data-page="tasks">
+            <div class="page-inner">
+              <div class="tk-head">
+                <span class="tk-title">Tasks</span>
+                <button class="tk-run" id="tkRun">Run program…</button>
+              </div>
+              <div class="tk-list" id="tkList"></div>
+            </div>
+          </section>
+
+          <section class="page page-discord" data-page="discord">
+            <div class="dc-chat" id="dcChat" aria-live="polite" hidden></div>
+            <div class="page-inner">
+              <div class="dc-head">
+                <span class="dc-title">Discord</span>
+                <span class="dc-state" id="dcState"><i class="dc-dot"></i><span id="dcStateText">Checking…</span></span>
+              </div>
+
+              <div class="dc-setup" id="dcSetup" hidden>
+                <div class="dc-setup-text">Use the same account in Discord for Windows and the <b>Discord Developer Portal</b>. Create an application, then open <b>OAuth2</b>. Application ID and Client ID are the same value; copy that and your Client Secret.</div>
+                <div class="dc-redirect-help">Before connecting, add this under <b>OAuth2 → Redirects</b> and click <b>Save Changes</b>:</div>
+                <div class="dc-redirect-row"><code>http://localhost</code><button class="dc-copy-redirect" type="button" id="dcCopyRedirect">Copy</button></div>
+                <div class="dc-setup-text">No bot or webhook is needed. Your credentials save automatically on this PC.</div>
+                <div class="dc-setup-err" id="dcSetupMsg"></div>
+                <input class="dc-input" id="dcClientId" type="text" inputmode="numeric" placeholder="Client ID" spellcheck="false" autocomplete="off" />
+                <input class="dc-input" id="dcSecret" type="password" placeholder="Client Secret" spellcheck="false" autocomplete="off" />
+                <div class="dc-save-state" id="dcSaveState" aria-live="polite"></div>
+                <div class="dc-setup-row">
+                  <button class="dc-btn wide" type="button" id="dcPortal">Dev portal</button>
+                  <button class="dc-btn wide go" type="button" id="dcSave">Save &amp; Connect</button>
+                </div>
+              </div>
+
+              <div class="dc-live" id="dcLive">
+                <div class="dc-card">
+                  <span class="dc-mark"><img class="dc-logo" src="discord-icon.png" alt="Discord" /></span>
+                  <div class="dc-info">
+                    <div class="dc-name" id="dcName">Discord</div>
+                    <div class="dc-sub" id="dcSub">Looking for the app…</div>
+                  </div>
+                  <button class="dc-gear" type="button" id="dcReset" aria-label="Reset Discord link" title="Reset link"><svg class="ic"><use href="#i-x" /></svg></button>
+                </div>
+
+                <div class="dc-members" id="dcMembers"></div>
+
+                <div class="dc-actions">
+                  <button class="dc-btn" type="button" data-dc="retry" id="dcConnect" hidden><svg class="ic dc-vector" aria-hidden="true"><use href="#i-discord" /></svg><span>Connect</span></button>
+                  <button class="dc-btn" type="button" data-dc="open"><svg class="ic dc-vector" aria-hidden="true"><use href="#i-discord" /></svg><span>Open</span></button>
+                  <button class="dc-btn" type="button" data-dc="mute" id="dcMute"><svg class="ic"><use href="#i-mute" /></svg><span>Mute</span></button>
+                  <button class="dc-btn" type="button" data-dc="deafen" id="dcDeaf"><svg class="ic"><use href="#i-headset" /></svg><span>Deafen</span></button>
+                  <button class="dc-btn leave" type="button" data-dc="leave" id="dcLeave"><svg class="ic"><use href="#i-x" /></svg><span>Leave</span></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page page-roblox" data-page="roblox">
+            <div class="page-inner">
+              <div class="rb-head">
+                <div class="rb-heading"><svg class="ic rb-logo"><use href="#i-roblox" /></svg><span class="rb-title">Roblox</span></div>
+                <div class="rb-head-actions"><span class="rb-state" id="rbState">CHECKING VOIDSTRAP</span><button class="rb-kill" type="button" id="rbKill" title="Force close RobloxPlayerBeta.exe" hidden><svg class="ic"><use href="#i-x" /></svg><span id="rbKillLabel">Kill Roblox</span></button><button class="rb-refresh" type="button" id="rbRefresh" aria-label="Refresh Roblox server info" title="Refresh"><svg class="ic"><use href="#i-repeat" /></svg></button></div>
+              </div>
+              <div class="rb-joined" id="rbJoined" hidden>
+                <span class="rb-joined-icon" id="rbJoinedIcon"><svg class="ic"><use href="#i-roblox" /></svg><img id="rbJoinedImg" alt="" hidden /></span>
+                <span class="rb-joined-copy">
+                  <span class="rb-joined-name" id="rbJoinedName">Roblox experience</span>
+                  <span class="rb-joined-where" id="rbJoinedWhere">Server location</span>
+                </span>
+                <button class="rb-save" type="button" id="rbSave">Save</button>
+              </div>
+              <div class="rb-current">
+                <div class="rb-current-copy"><span class="rb-kicker">CURRENT GAME</span><span class="rb-current-title" id="rbCurrentTitle">Checking Roblox…</span><span class="rb-current-detail" id="rbCurrentDetail">Reading Roblox session and Voidstrap detector</span></div>
+                <div class="rb-ping"><strong id="rbCurrentPing">— ms</strong><span id="rbPingLabel">live RTT</span></div>
+              </div>
+              <div class="rb-list-head"><span>RECENT GAMES</span><span>CLICK TO PLAY</span></div>
+              <div class="rb-recent-list" id="rbRecent"><div class="rb-empty">Games you launch or play show up here</div></div>
+              <div class="rb-list-head"><span>RECENT DETECTED REGIONS</span><span>VOIDSTRAP</span></div>
+              <div class="rb-known-list" id="rbKnownList"><div class="rb-empty">Loading detector data…</div></div>
+            </div>
+          </section>
+
+          <section class="page page-settings" data-page="settings">
+            <div class="page-inner">
+              <div class="rb-head">
+                <div class="rb-heading"><svg class="ic"><use href="#i-gear" /></svg><span class="rb-title">Theme</span></div>
+                <div class="rb-head-actions"><span class="rb-state" id="setState">SKY · SOLID</span></div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">ISLAND THEME</span>
+                <div class="set-chips" id="setTheme">
+                  <button type="button" class="set-chip" data-theme="auto">Auto</button>
+                  <button type="button" class="set-chip" data-theme="night">Night</button>
+                  <button type="button" class="set-chip" data-theme="dawn">Dawn</button>
+                  <button type="button" class="set-chip" data-theme="day">Day</button>
+                  <button type="button" class="set-chip" data-theme="dusk">Dusk</button>
+                  <button type="button" class="set-chip" data-theme="black">Black</button>
+                </div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">SURFACE</span>
+                <div class="set-chips" id="setSurface">
+                  <button type="button" class="set-chip" data-surface="frosted">Frosted glass</button>
+                  <button type="button" class="set-chip" data-surface="minimal">Minimal</button>
+                </div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">ISLAND COLOR</span>
+                <div class="set-chips" id="setAccent">
+                  <button type="button" class="set-chip set-swatch" data-accent="#7aa2f7"><i style="background:#7aa2f7"></i>Sky</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#a78bfa"><i style="background:#a78bfa"></i>Violet</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#2dd4bf"><i style="background:#2dd4bf"></i>Teal</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#4ade80"><i style="background:#4ade80"></i>Green</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#fbbf24"><i style="background:#fbbf24"></i>Amber</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#fb7185"><i style="background:#fb7185"></i>Rose</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#e2e8f0"><i style="background:#e2e8f0"></i>Ice</button>
+                  <button type="button" class="set-chip set-swatch" data-accent="#94a3b8"><i style="background:#94a3b8"></i>Graphite</button>
+                </div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">TABS</span>
+                <div class="set-chips" id="setTabsMode">
+                  <button type="button" class="set-chip" data-tabs="all">All tabs</button>
+                  <button type="button" class="set-chip" data-tabs="custom">Custom</button>
+                </div>
+                <div class="set-chips set-tabs-list" id="setTabsList"></div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">BACKGROUND</span>
+                <div class="set-chips" id="setBackground">
+                  <button type="button" class="set-chip" data-background="on">Live sky</button>
+                  <button type="button" class="set-chip" data-background="off">Off</button>
+                </div>
+              </div>
+
+              <div class="set-group">
+                <span class="set-label">GUIDE</span>
+                <div class="set-chips">
+                  <button type="button" class="set-chip" id="setReplay">Replay onboarding</button>
+                </div>
+              </div>
+
+              <p class="set-hint">The theme sets the sky behind every tab; each tab keeps its own tint. The colour paints both the open island and the collapsed pill.</p>
+            </div>
+          </section>
+          </div>
+
+          <div class="guide" id="guide" hidden>
+            <div class="guide-top">
+              <span class="guide-kicker" id="guideKicker">WELCOME</span>
+              <span class="guide-step" id="guideStep">1 / 5</span>
+            </div>
+            <div class="guide-body" id="guideBody"></div>
+            <div class="guide-actions">
+              <button class="guide-skip" id="guideSkip" type="button">Skip</button>
+              <button class="guide-next" id="guideNext" type="button">Continue</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="underbar" id="underbar">
+          <div class="tabs" id="uTabs" role="tablist" aria-label="Views">
+            <span class="tab-selector" id="tabSelector" aria-hidden="true"></span>
+            <button type="button" role="tab" data-tab="media" aria-label="Media"><svg class="ic"><use href="#i-note" /></svg></button>
+            <button type="button" role="tab" data-tab="timer" aria-label="Timer"><svg class="ic"><use href="#i-hourglass" /></svg></button>
+            <button type="button" role="tab" data-tab="identify" aria-label="Identify song"><svg class="ic"><use href="#i-identify" /></svg></button>
+            <button type="button" role="tab" data-tab="system" aria-label="System"><svg class="ic"><use href="#i-bolt" /></svg></button>
+            <button type="button" role="tab" data-tab="clock" aria-label="Clock"><svg class="ic"><use href="#i-clock" /></svg></button>
+            <button type="button" role="tab" data-tab="clipboard" aria-label="Clipboard"><svg class="ic"><use href="#i-clipboard" /></svg></button>
+            <button type="button" role="tab" data-tab="notes" aria-label="Notes"><svg class="ic"><use href="#i-pencil" /></svg></button>
+            <button type="button" role="tab" data-tab="tasks" aria-label="Tasks"><svg class="ic"><use href="#i-list" /></svg></button>
+            <button type="button" role="tab" data-tab="discord" aria-label="Discord"><svg class="ic dc-vector" aria-hidden="true"><use href="#i-discord" /></svg></button>
+            <button type="button" role="tab" data-tab="roblox" aria-label="Roblox"><svg class="ic rb-logo"><use href="#i-roblox" /></svg></button>
+            <button type="button" role="tab" data-tab="settings" aria-label="Theme"><svg class="ic"><use href="#i-gear" /></svg></button>
+          </div>
+          <button id="updateNotice" class="update-notice" type="button" hidden aria-live="polite"></button>
+          <button id="uUpdate" class="u-update" type="button" aria-label="Check for updates" title="Check for updates">
+            <svg class="ic"><use href="#i-repeat" /></svg>
+          </button>
+          <button id="uClose" class="u-close" aria-label="Close island"><svg class="ic"><use href="#i-x" /></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="preview-api.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
