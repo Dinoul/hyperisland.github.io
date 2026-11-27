@@ -126,6 +126,8 @@
   .bar.is-scrolled{background:none;border-color:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
   .bar.is-scrolled::before,.bar.is-scrolled::after{opacity:1}
   .winisland-frame[data-clear]{color-scheme:light}
+  .stage.is-fallback .winisland-frame{display:none}
+  .stage.is-fallback>.pill{display:block;margin:0 auto}
   </style>
   </head>
   <body data-preview-mode="compact">
@@ -376,7 +378,7 @@
     updateHeader();
     previewFrame=document.querySelector('.winisland-frame');
     var previewStage=document.querySelector('.stage');
-    var previewSwap=0;
+    var previewSwap=0,previewAlive=false;
     function setPreviewMode(mode){
       if(mode!=='open'&&mode!=='compact')return;
       previewMode=mode;
@@ -403,10 +405,17 @@
       });
       window.addEventListener('message',function(event){
         if(event.source!==previewFrame.contentWindow||!event.data||event.data.type!=='winisland-preview-state')return;
+        previewAlive=true;
+        if(previewStage)previewStage.classList.remove('is-fallback');
         setPreviewMode(event.data.mode);
       });
     }
     setPreviewMode(previewMode);
+    setTimeout(function(){
+      if(previewAlive||!previewStage)return;
+      previewStage.classList.add('is-fallback');
+      console.warn('Hyperisland: winisland-preview/index.html did not respond. Check that the folder is deployed.');
+    },3000);
     btn.addEventListener('click',function(){
       var dark=root.getAttribute('data-theme')==='dark'||(!root.getAttribute('data-theme')&&systemTheme.matches);
       var next=dark?'light':'dark';
